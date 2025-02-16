@@ -3,7 +3,8 @@ const path = require("path");
 const { spawn } = require("child_process");
 const cors = require("cors");
 const fs = require("fs-extra");
-
+const os = require("os");
+const { exec } = require("child_process");
 const app = express();
 const PORT = 2354;
 
@@ -14,6 +15,25 @@ app.use(cors({
     methods: ["GET", "POST"],
     allowedHeaders: ["Content-Type"]
 }));
+
+
+// Helper function to get the correct command format for each OS
+const getLaunchCommand = (name, path, args) => {
+    const platform = os.platform();
+    args = args ? args.trim() : "";
+
+    if (platform === "win32") {
+        return `"${path}" ${args}`;
+    } else if (platform === "darwin") {
+        return `open -a "${path}" ${args}`;
+    } else if (platform === "linux") {
+        return `${path} ${args}`;
+    } else if (platform === "android") {
+        return `adb shell am start -n ${path}`;
+    }
+    return null;
+};
+
 
 const FRONTEND_DIST = path.join(__dirname, "dist"); // Ensure the correct path
 app.use(express.static(FRONTEND_DIST));
@@ -92,20 +112,30 @@ app.post("/api/removeApp", (req, res) => {
 
 // API: Launch an application
 app.post("/api/launch", (req, res) => {
-    const { path, params } = req.body;
+    let { name, path, args } = req.body;
+
     if (!path) {
         return res.status(400).json({ error: "Application path is required" });
     }
 
-    try {
-        const process = spawn(path, params ? [params] : [], { detached: true, shell: true });
-        process.unref();
-        res.json({ message: `Launched ${path} ${params || ""}` });
-    } catch (error) {
-        console.error("Error launching application:", error);
-        res.status(500).json({ error: "Failed to launch application", details: error.message });
+    const command = getLaunchCommand(name, path, args);
+    if (!command) {
+        return res.status(500).json({ error: "Unsupported OS" });
     }
+
+    console.log(`Executing: ${command}`);
+
+    exec(command, (error, stdout, stderr) => {
+        if (error) {
+            console.error(`Error launching ${name}:`, error);
+            return res.status(500).json({ error: `Failed to launch ${name}: ${error.message}` });
+        }
+
+        console.log(`Output: ${stdout || stderr}`);
+        res.json({ message: `${name} launched successfully!` });
+    });
 });
+
 
 // Catch-all route for SPA (React)
 app.get("*", (req, res) => {
