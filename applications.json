@@ -1,0 +1,12 @@
+[
+  {
+    "name": "Google Chrome",
+    "path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    "params": "google.com"
+  },
+  {
+    "name": "Notepad",
+    "path": "notepad.exe",
+    "params": ""
+  }
+]
