@@ -9,6 +9,11 @@
   "author": "",
   "license": "ISC",
   "description": "",
+  "bin": "server.js",
+"pkg": {
+  "scripts": "server.js",
+  "assets": ["icons/*", "applications.json"]
+},
   "dependencies": {
     "child_process": "^1.0.2",
     "cors": "^2.8.5",

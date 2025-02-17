@@ -1,30 +1,32 @@
 const express = require("express");
 const path = require("path");
-const { spawn, exec } = require("child_process");
 const cors = require("cors");
 const fs = require("fs-extra");
 const os = require("os");
-const { extractIcon } = require("icon-extractor");
-
+const { exec } = require("child_process");
 const app = express();
 const PORT = 2354;
+const extractIcon = require("extract-file-icon"); 
 
-// Middleware
+
 app.use(express.json());
 app.use(cors({
-    origin: "*",  // Allow all origins (you can restrict this later)
+    origin: "*",  
     methods: ["GET", "POST"],
     allowedHeaders: ["Content-Type"]
 }));
 
 const ICONS_DIR = path.join(__dirname, "public", "icons");
-fs.ensureDirSync(ICONS_DIR);
 
-const FRONTEND_DIST = path.join(__dirname, "dist");
+
+fs.ensureDirSync(ICONS_DIR);
+const FRONTEND_DIST = path.join(__dirname, "dist"); 
+const DATA_FILE = path.join(__dirname, "applications.json");
+
 app.use(express.static(FRONTEND_DIST));
 app.use("/api/icons", express.static(ICONS_DIR));
+// Storage file for applications
 
-const DATA_FILE = path.join(__dirname, "applications.json");
 
 // Function to extract and save icons
 const getIcon = async (appName, appPath) => {
@@ -33,11 +35,12 @@ const getIcon = async (appName, appPath) => {
     if (fs.existsSync(iconFile)) return `/api/icons/${appName}.png`;
 
     try {
-        await extractIcon(appPath, iconFile);
+        const iconBuffer = extractIcon(appPath, 256); // Get 256px icon
+        fs.writeFileSync(iconFile, iconBuffer);
         return `/api/icons/${appName}.png`;
     } catch (error) {
         console.error(`Failed to extract icon for ${appName}:`, error);
-        return `/api/icons/default.png`;
+        return `/api/icons/default.png`; // Default icon if extraction fails
     }
 };
 
@@ -57,6 +60,9 @@ const getLaunchCommand = (name, path, args) => {
     }
     return null;
 };
+
+
+
 
 // Load applications from storage
 function loadApplications() {
@@ -85,6 +91,7 @@ function saveApplications(apps) {
     }
 }
 
+
 // API: Get all applications with icons
 app.get("/api/getApps", async (req, res) => {
     const apps = loadApplications();
@@ -106,6 +113,7 @@ app.post("/api/addApps", (req, res) => {
 
     const apps = loadApplications();
 
+    // Prevent duplicate entries
     if (apps.some(app => app.path === path)) {
         return res.status(400).json({ error: "Application already exists" });
     }
@@ -159,12 +167,14 @@ app.post("/api/launch", (req, res) => {
     });
 });
 
+
 // Catch-all route for SPA (React)
 app.get("*", (req, res) => {
     res.sendFile(path.join(FRONTEND_DIST, "index.html"));
 });
 
-// Start server
-app.listen(PORT, "localhost", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Server running on http://192.168.x.x:${PORT}`);
 });
+
+
