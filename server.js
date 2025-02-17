@@ -30,17 +30,18 @@ const DEFAULT_ICON = "https://cdn2.iconfinder.com/data/icons/metro-ui-icon-set/5
 const getIconOnline = async (appName) => {
     const apiUrl = `https://simpleicons.org/icons/${appName.toLowerCase().replace(/ /g, '')}.svg`;
     try {
-        const response = await axios.get(apiUrl);
-        if (response.status === 200) {
+        const response = await fetch(apiUrl);
+        if (response.ok) {
             return apiUrl;
         } else {
             return DEFAULT_ICON;
         }
     } catch (error) {
-        console.error(`Failed to fetch icon for ${appName}:`);
+        console.error(`Failed to fetch icon for ${appName}:`, error);
         return DEFAULT_ICON;
     }
 };
+
 
 const getLaunchCommand = (name, path, args) => {
     const platform = os.platform();
