@@ -25,7 +25,6 @@ app.use("/api/icons", express.static(ICONS_DIR));
 
 
 
-// Function to fetch icons online
 const DEFAULT_ICON = "https://cdn2.iconfinder.com/data/icons/metro-ui-icon-set/512/Default.png";
 
 const getIconOnline = async (appName) => {
